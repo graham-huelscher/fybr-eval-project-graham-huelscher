@@ -6,6 +6,7 @@ import * as turf from '@turf/turf';
 import Map, { Layer, Sources, GeoJSON } from '../components/map';
 
 import { centerMapOnSite, mapSetCenter, mapSetZoom } from '../model/map';
+import { getTrees, getProjects, getSites } from '../model';
 
 class InteractiveMap extends Component {
   render() {
@@ -18,6 +19,8 @@ class InteractiveMap extends Component {
       [bounding.left, bounding.bottom],
       [bounding.left, bounding.top]
     ]], { name: 'Bounding Area' });
+
+   // const area = turf.area(boundingFeature);
 
     return (
       <Map { ...this.props }>
@@ -42,7 +45,9 @@ function mapStateToProps(state) {
   return {
     currentSite: state.sites.byId[state.sites.selected],
     center: state.map.center,
-    zoom: state.map.zoom
+    zoom: state.map.zoom,
+    trees: getTrees(state),
+    projects: getProjects(state)
   };
 }
 
