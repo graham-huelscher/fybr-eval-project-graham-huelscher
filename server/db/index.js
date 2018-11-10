@@ -7,3 +7,4 @@ const client = new Client({
 client.connect();
 
 module.exports = (query, params = []) => client.query(query, params).then(result => result.rows);
+
