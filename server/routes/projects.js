@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const projects = require('../db/mock/projects.json');
 
 module.exports = (db) => {
   router.get('/', (request, response, next) => {
@@ -7,7 +6,7 @@ module.exports = (db) => {
       .then(projects => db('SELECT * FROM sites')
         .then(sites => {
 
-          projectsObject = {
+          const projectsObject = {
             byId: {},
             ids : projects.map(project => project.id)
           }

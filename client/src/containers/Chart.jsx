@@ -1,10 +1,17 @@
 import React, { Component } from 'react';
 import { GradientDarkgreenGreen } from '@vx/gradient';
+import { getTrees, getSiteId } from '../model';
+import { connect } from 'react-redux';
+import { scaleBand, scaleLinear } from 'd3-scale'
+import Axes from '../components/chart/Axes'
+import Bars from '../components/chart/Bars'
 
 class Chart extends Component {
   state = {
     width: 0,
-    height: 0
+    height: 0,
+    xScale: scaleBand(),
+    yScale: scaleLinear()
   };
 
   componentDidMount() {
@@ -28,8 +35,61 @@ class Chart extends Component {
     this.chart = node;
   }
 
+  maxCount = (data) => {
+    let max = -1
+    for (let range in data) {
+      if (data[range] > max)
+        max = data[range]
+    }
+    return max
+  }
+
   render() {
     const { width, height } = this.state;
+    const treesForSite = this.props.trees.filter(tree => tree.site_id === this.props.siteId)
+
+    //create data object for use in bar chart and sort tree heights into appropriate ranges
+    const data = {
+      '0m - 10m': 0,
+      '10m - 20m': 0,
+      '20m - 30m': 0,
+      '30m - 40m': 0,
+      '40m - 50m': 0,
+      '50m - 60m': 0,
+      '60m - 70m': 0,
+    }
+
+    treesForSite.forEach(tree => {
+      const h = tree.height
+      if (h < 10 && h > 0)
+        data['0m - 10m']++
+      else if (h < 20 && h >= 10)
+        data['10m - 20m']++
+      else if (h < 30 && h >= 20)
+        data['20m - 30m']++
+      else if (h < 40 && h >= 30)
+        data['30m - 40m']++
+      else if (h < 50 && h >= 40)
+        data['40m - 50m']++
+      else if (h < 60 && h >= 50)
+        data['50m - 60m']++
+      else if (h < 70 && h >= 60)
+        data['60m - 70m']++
+    })
+
+    //setup D3.js parameters for a bar chart
+    const margins = { top: 50, right: 20, bottom: 50, left: 60 }
+    const svgDimensions = { width: width, height: height }
+    const maxValue = this.maxCount(data)
+    const categories = Object.keys(data)
+
+    const xScale = this.state.xScale
+      .padding(0.5)
+      .domain(categories)
+      .range([margins.left, svgDimensions.width - margins.right])
+    const yScale = this.state.yScale
+      .domain([0, maxValue])
+      .range([svgDimensions.height - margins.bottom, margins.top])
 
     /* This is a hack to first set the size based on percentage
        then query for the size so the chart can be scaled to the window size.
@@ -41,6 +101,7 @@ class Chart extends Component {
     return (
       <svg ref={this.setRef} width={'100%'} height={'100%'}>
         <GradientDarkgreenGreen id="gradient" />
+
         <rect
           x={0}
           y={0}
@@ -48,85 +109,31 @@ class Chart extends Component {
           height={height}
           fill={`url(#gradient)`}
         />
-        <g transform="translate(40,20)">
-          <g className="x axis" transform="translate(0,450)">
-            <g className="tick" transform="translate(25.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>A</text>
-            </g>
-            <g className="tick" transform="translate(59.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>B</text>
-            </g>
-            <g className="tick" transform="translate(93.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>C</text>
-            </g>
-            <g className="tick" transform="translate(127.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>D</text>
-            </g>
-            <g className="tick" transform="translate(161.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>E</text>
-            </g>
-            <g className="tick" transform="translate(195.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>F</text>
-            </g>
-            <g className="tick" transform="translate(229.5,0)" style={{opacity: 1}}><line y2="6" x2="0"></line>
-              <text dy=".71em" y="9" x="0" style={{textAnchor: 'middle'}}>G</text>
-            </g>
-          </g>
-          <g className="y axis">
-            <g className="tick" transform="translate(0,600)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>0</text>
-            </g>
-            <g className="tick" transform="translate(0,414.57250826641473)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>1</text>
-            </g>
-            <g className="tick" transform="translate(0,379.14501653282946)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>2</text>
-            </g>
-            <g className="tick" transform="translate(0,343.71752479924425)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>3</text>
-            </g>
-            <g className="tick" transform="translate(0,308.290033065659)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>4</text>
-            </g>
-            <g className="tick" transform="translate(0,272.86254133207365)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>5</text>
-            </g>
-            <g className="tick" transform="translate(0,237.43504959848843)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>6</text>
-            </g>
-            <g className="tick" transform="translate(0,202.0075578649031)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>7</text>
-            </g>
-            <g className="tick" transform="translate(0,166.5800661313179)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>8</text>
-            </g>
-            <g className="tick" transform="translate(0,131.15257439773262)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>9</text>
-            </g>
-            <g className="tick" transform="translate(0,95.72508266414734)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>10</text>
-            </g>
-            <g className="tick" transform="translate(0,60.297590930562116)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>11</text>
-            </g>
-            <g className="tick" transform="translate(0,24.87009919697684)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>12</text>
-            </g>
-            <g className="tick" transform="translate(0,-10.5573925366)" style={{opacity: 1}}><line x2="-6" y2="0"></line>
-              <text dy=".32em" x="-9" y="0" style={{textAnchor: 'end'}}>13</text>
-            </g>
-          </g>
-          <rect className="bar" x="10" width="31" y="160.66367501180912" height="289.3363249881909"></rect>
-          <rect className="bar" x="44" width="31" y="397.1421823334908" height="52.85781766650922"></rect>
-          <rect className="bar" x="78" width="31" y="351.4407179971658" height="98.55928200283421"></rect>
-          <rect className="bar" x="112" width="31" y="299.3268776570619" height="150.6731223429381"></rect>
-          <rect className="bar" x="146" width="31" y="0" height="450"></rect>
-          <rect className="bar" x="180" width="31" y="368.94189891355694" height="81.05810108644306"></rect>
-          <rect className="bar" x="214" width="31" y="378.61360415682566" height="71.38639584317434"></rect>
-        </g>
+        <Axes
+          scales={{ xScale, yScale }}
+          margins={margins}
+          svgDimensions={svgDimensions}
+        />
+        <Bars
+          scales={{ xScale, yScale }}
+          margins={margins}
+          data={data}
+          maxValue={maxValue}
+          svgDimensions={svgDimensions}
+        />
       </svg>
     );
   }
 }
 
-export default Chart;
+function mapStateToProps(state) {
+  return {
+    trees: getTrees(state),
+    siteId: state.sites.selected
+  };
+}
+
+const mapDispatchToProps = {
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Chart);

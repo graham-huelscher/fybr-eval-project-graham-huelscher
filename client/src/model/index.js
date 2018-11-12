@@ -45,4 +45,5 @@ export const getTrees = createSelector(
   [allTrees],
   trees => trees.ids.map(id => trees.byId[id])
 );
+
   
